@@ -36,6 +36,7 @@ const HomePage = () => {
       foodExpiryDate: itemExpiryDate,
     };
     createSaveItem(itemToPost);
+    console.log(`API_BASE: ${API_BASE}`)
   };
 
   const fetchSaveItems = async () => {
