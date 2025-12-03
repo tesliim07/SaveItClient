@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE } from "../api";
 import NavBar from "../components/NavBar";
+import Countdown from "../components/Countdown";
 
 interface SaveItemsProps {
   foodId?: string;
@@ -21,6 +22,7 @@ const HomePage = () => {
   const [nameError, setNameError] = useState(true);
   const [categoryError, setCategoryError] = useState(true);
   const [expiryDateError, setExpiryDateError] = useState(true);
+  const [expiringItems, setExpiringItems] = useState<SaveItemsProps[]>([]);
   const categoryList = [
     "Not Selected",
     "Vegetables",
@@ -116,6 +118,26 @@ const HomePage = () => {
     }
   };
 
+  const fetchExpiringItems = async () => {
+    const token = localStorage.getItem("jwt");
+    try {
+      const response = await axios.get(
+        `${API_BASE}/api/FoodSaver/GetExpiringItemsByUserProviderId`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.status === 200) {
+        setExpiringItems(response.data)
+        console.log("Success response data:", response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching Expiring Items:", error);
+    }
+  };
+
   const createSaveItem = async (itemToPost: SaveItemsProps) => {
     const token = localStorage.getItem("jwt");
     try {
@@ -195,6 +217,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       await fetchSaveItems();
+      await fetchExpiringItems();
     };
     fetchData();
   }, [saveId]);
@@ -202,7 +225,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <NavBar />
-
+      {expiringItems.length > 0 && <Countdown/> }
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl sm:text-4xl font-bold text-blue-500 mb-6 text-center">
           Save It Manager
