@@ -14,6 +14,8 @@ const HomePage = () => {
   const [itemName, setItemName] = useState("");
   const [itemCategory, setItemCategory] = useState("");
   const [itemExpiryDate, setItemExpiryDate] = useState("");
+  const [editingFoodId, setEditingFoodId] = useState<string | null>(null);
+  const [isEditButtonClicked, setIsEditButtonClicked] = useState(false);
   const [userSaveItems, setUserSaveItems] = useState<SaveItemsProps[]>([]);
   const [saveId, setSaveId] = useState("");
   const [nameError, setNameError] = useState(true);
@@ -86,6 +88,14 @@ const HomePage = () => {
     console.log(`API_BASE: ${API_BASE}`);
   };
 
+  const handleEdit = (item: SaveItemsProps) => {
+    setIsEditButtonClicked(true);
+    setEditingFoodId(item.foodId || null);
+    setItemName(item.foodName);
+    setItemCategory(item.foodCategory);
+    setItemExpiryDate(item.foodExpiryDate);
+  };
+
   const fetchSaveItems = async () => {
     const token = localStorage.getItem("jwt");
     try {
@@ -120,6 +130,9 @@ const HomePage = () => {
       );
       if (response.status === 200) {
         setSaveId(response.data);
+        setItemName("");
+        setItemCategory("Not Selected");
+        setItemExpiryDate("");
       }
     } catch (error) {
       console.error("Error creating Save Item:", error);
@@ -145,6 +158,40 @@ const HomePage = () => {
     }
   };
 
+  const editSaveItem = async (itemId: string | unknown) => {
+    const token = localStorage.getItem("jwt");
+    const newData = {
+      foodId: itemId,
+      foodName: itemName,
+      foodCategory: itemCategory,
+      foodExpiryDate: itemExpiryDate,
+    };
+    try {
+      const response = await axios.put(
+        `${API_BASE}/api/FoodSaver/UpdateFoodItem`,
+        newData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.status === 200) {
+        setSaveId(response.data);
+        setEditingFoodId(null);
+        setIsEditButtonClicked(false);
+        setItemName("");
+        setItemCategory("Not Selected");
+        setItemExpiryDate("");
+        setNameError(true);
+        setCategoryError(true);
+        setExpiryDateError(true);
+      }
+    } catch (error) {
+      console.error("Error updating Save Item:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       await fetchSaveItems();
@@ -167,14 +214,13 @@ const HomePage = () => {
             expiry date. You’ll receive reminder emails starting 3 days before
             an item expires. To ensure delivery, add noreplySaveIt@gmail.com to
             your safe sender list — it may otherwise go to spam or junk. Here's
-            a
+            a{" "}
             <a
               href="https://www.youtube.com/shorts/4Q3BfcLM_fg"
               target="_blank"
               className="underline"
             >
-              {" "}
-              link{" "}
+              link
             </a>{" "}
             on how to do it in 47 seconds.
           </p>
@@ -202,6 +248,7 @@ const HomePage = () => {
             <label className="flex-1 flex flex-col text-gray-700">
               Category:
               <select
+                value={itemCategory} 
                 onChange={handleCategoryChange}
                 className={`mt-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
                   categoryError
@@ -221,6 +268,7 @@ const HomePage = () => {
               Expiry Date:
               <input
                 type="date"
+                value={itemExpiryDate}
                 onChange={handleExpiryDateChange}
                 className={`mt-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
                   expiryDateError
@@ -233,7 +281,12 @@ const HomePage = () => {
 
           <button
             type="submit"
-            disabled={nameError || categoryError || expiryDateError}
+            disabled={
+              nameError ||
+              categoryError ||
+              expiryDateError ||
+              isEditButtonClicked
+            }
             className="mt-2 w-full sm:w-auto px-4 py-2 font-semibold rounded-md transition-colors duration-200 bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed"
           >
             Add
@@ -254,6 +307,9 @@ const HomePage = () => {
                 </th>
                 <th className="px-6 py-3 border-b text-gray-800 font-semibold">
                   Delete Action
+                </th>
+                <th className="px-6 py-3 border-b text-gray-800 font-semibold">
+                  Edit Action
                 </th>
               </tr>
             </thead>
@@ -284,6 +340,37 @@ const HomePage = () => {
                     >
                       Delete
                     </button>
+                  </td>
+                  <td className="px-6 py-3 border-b text-gray-800">
+                    {editingFoodId === item.foodId ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => editSaveItem(item.foodId)}
+                          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 mr-2"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingFoodId(null);
+                            setIsEditButtonClicked(false);
+                          }}
+                          className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(item)}
+                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      >
+                        Edit
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
