@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE } from "../api";
+import NavBar from "../components/NavBar";
 
 interface SaveItemsProps {
   foodId?: string;
@@ -15,7 +16,11 @@ const HomePage = () => {
   const [itemExpiryDate, setItemExpiryDate] = useState("");
   const [userSaveItems, setUserSaveItems] = useState<SaveItemsProps[]>([]);
   const [saveId, setSaveId] = useState("");
+  const [nameError, setNameError] = useState(true);
+  const [categoryError, setCategoryError] = useState(true);
+  const [expiryDateError, setExpiryDateError] = useState(true);
   const categoryList = [
+    "Not Selected",
     "Vegetables",
     "Fruits",
     "Grains",
@@ -28,15 +33,57 @@ const HomePage = () => {
     "Others",
   ];
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setItemName(value);
+    if (value.trim()) {
+      setNameError(false);
+    } else {
+      setNameError(true);
+    }
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setItemCategory(value);
+    if (value != "Not Selected") {
+      setCategoryError(false);
+    } else {
+      setCategoryError(true);
+    }
+  };
+
+  const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setItemExpiryDate(value);
+    if (value.trim()) {
+      setExpiryDateError(false);
+    } else {
+      setExpiryDateError(true);
+    }
+  };
+
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    if (!itemName.trim()) {
+      setNameError(true);
+    } else {
+      setNameError(false);
+    }
+
+    if (itemCategory == "Not Selected") {
+      setCategoryError(true);
+    } else {
+      setCategoryError(false);
+    }
+
     const itemToPost = {
       foodName: itemName,
       foodCategory: itemCategory,
       foodExpiryDate: itemExpiryDate,
     };
     createSaveItem(itemToPost);
-    console.log(`API_BASE: ${API_BASE}`)
+    console.log(`API_BASE: ${API_BASE}`);
   };
 
   const fetchSaveItems = async () => {
@@ -106,46 +153,144 @@ const HomePage = () => {
   }, [saveId]);
 
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Name:
-          <input
-            type="text"
-            onChange={(event) => setItemName(event.target.value)}
-          ></input>
-        </label>
-        <label>
-          Category:
-          <select onChange={(event) => setItemCategory(event.target.value)}>
-            {categoryList.map((eachCategory) => (
-              <option value={eachCategory}>{eachCategory}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Expiry Date:
-          <input
-            type="date"
-            onChange={(event) => setItemExpiryDate(event.target.value)}
-          ></input>
-        </label>
-        <button type="submit">Add</button>
-      </form>
-      <ul>
-        {userSaveItems.map((eachSaveItem) => (
-          <li key={eachSaveItem.foodId}>
-            {eachSaveItem.foodName} {eachSaveItem.foodCategory}{" "}
-            {eachSaveItem.foodExpiryDate}
-            <button
-              type="button"
-              onClick={() => deleteSaveItem(eachSaveItem.foodId)}
+    <div className="min-h-screen bg-gray-50">
+      <NavBar />
+
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl sm:text-4xl font-bold text-blue-500 mb-6 text-center">
+          Save It Manager
+        </h1>
+
+        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded mb-6">
+          <p className="text-blue-700">
+            Add items to your inventory by selecting the correct category and
+            expiry date. You’ll receive reminder emails starting 3 days before
+            an item expires. To ensure delivery, add noreplySaveIt@gmail.com to
+            your safe sender list — it may otherwise go to spam or junk. Here's
+            a
+            <a
+              href="https://www.youtube.com/shorts/4Q3BfcLM_fg"
+              target="_blank"
+              className="underline"
             >
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
+              {" "}
+              link{" "}
+            </a>{" "}
+            on how to do it in 47 seconds.
+          </p>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-xl shadow-md p-6 mb-8 space-y-4"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+            <label className="flex-1 flex flex-col text-gray-700">
+              Name:
+              <input
+                type="text"
+                value={itemName}
+                onChange={handleNameChange}
+                className={`mt-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  nameError
+                    ? "border-red-300 focus:ring-red-400"
+                    : "border-black-300 focus:ring-blue-400"
+                }`}
+              />
+            </label>
+
+            <label className="flex-1 flex flex-col text-gray-700">
+              Category:
+              <select
+                onChange={handleCategoryChange}
+                className={`mt-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  categoryError
+                    ? "border-red-300 focus:ring-red-400"
+                    : "border-black-300 focus:ring-blue-400"
+                }`}
+              >
+                {categoryList.map((eachCategory) => (
+                  <option key={eachCategory} value={eachCategory}>
+                    {eachCategory}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex-1 flex flex-col text-gray-700">
+              Expiry Date:
+              <input
+                type="date"
+                onChange={handleExpiryDateChange}
+                className={`mt-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  expiryDateError
+                    ? "border-red-300 focus:ring-red-400"
+                    : "border-black-300 focus:ring-blue-400"
+                }`}
+              />
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            disabled={nameError || categoryError || expiryDateError}
+            className="mt-2 w-full sm:w-auto px-4 py-2 font-semibold rounded-md transition-colors duration-200 bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed"
+          >
+            Add
+          </button>
+        </form>
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
+            <thead className="bg-blue-100">
+              <tr>
+                <th className="px-6 py-3 border-b text-gray-800 font-semibold">
+                  Name
+                </th>
+                <th className="px-6 py-3 border-b text-gray-800 font-semibold">
+                  Category
+                </th>
+                <th className="px-6 py-3 border-b text-gray-800 font-semibold">
+                  Expiry Date
+                </th>
+                <th className="px-6 py-3 border-b text-gray-800 font-semibold">
+                  Delete Action
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {userSaveItems.map((item, index) => (
+                <tr
+                  key={item.foodId}
+                  className={
+                    index % 2 === 0
+                      ? "bg-white"
+                      : "bg-gray-50 hover:bg-gray-100"
+                  }
+                >
+                  <td className="px-6 py-3 border-b text-gray-800">
+                    {item.foodName}
+                  </td>
+                  <td className="px-6 py-3 border-b text-gray-800">
+                    {item.foodCategory}
+                  </td>
+                  <td className="px-6 py-3 border-b text-gray-800">
+                    {item.foodExpiryDate}
+                  </td>
+                  <td className="px-6 py-3 border-b text-gray-800">
+                    <button
+                      type="button"
+                      onClick={() => deleteSaveItem(item.foodId)}
+                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
