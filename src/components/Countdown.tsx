@@ -40,7 +40,7 @@ const Countdown = () => {
           Counting Down Until Your Email Arrives!
         </h1>
         <p className="text-lg sm:text-xl md:text-2xl font-medium text-blue-300">
-          Hang tight! Your email will be landing in your inbox shortly.
+          Hang tight! Your email for items that will be expiring in 3 days will be landing in your inbox shortly.
         </p>
       </div>
       <div className="flex justify-center gap-4 text-center text-white text-lg sm:text-xl md:text-2xl font-semibold my-4">

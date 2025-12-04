@@ -3,6 +3,7 @@ import axios from "axios";
 import { API_BASE } from "../api";
 import NavBar from "../components/NavBar";
 import Countdown from "../components/Countdown";
+import PopUp from "../components/PopUp";
 
 interface SaveItemsProps {
   foodId?: string;
@@ -13,16 +14,20 @@ interface SaveItemsProps {
 
 const HomePage = () => {
   const [itemName, setItemName] = useState("");
-  const [itemCategory, setItemCategory] = useState("");
+  const [itemCategory, setItemCategory] = useState("Not Selected");
   const [itemExpiryDate, setItemExpiryDate] = useState("");
   const [editingFoodId, setEditingFoodId] = useState<string | null>(null);
   const [isEditButtonClicked, setIsEditButtonClicked] = useState(false);
   const [userSaveItems, setUserSaveItems] = useState<SaveItemsProps[]>([]);
   const [saveId, setSaveId] = useState("");
-  const [nameError, setNameError] = useState(true);
-  const [categoryError, setCategoryError] = useState(true);
-  const [expiryDateError, setExpiryDateError] = useState(true);
   const [expiringItems, setExpiringItems] = useState<SaveItemsProps[]>([]);
+  const [isSaveItemDeleted, setIsSaveItemDeleted] = useState<boolean>(false);
+  const [deletingFoodId, setDeletingFoodId] = useState<
+    string | undefined
+  >("");
+  const [isEditSaveButtonClicked, setIsEditSaveButtonClicked] =
+    useState<boolean>(false);
+  const [showPopUp, setShowPopUp] = useState(false);
   const categoryList = [
     "Not Selected",
     "Vegetables",
@@ -40,46 +45,20 @@ const HomePage = () => {
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setItemName(value);
-    if (value.trim()) {
-      setNameError(false);
-    } else {
-      setNameError(true);
-    }
   };
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setItemCategory(value);
-    if (value != "Not Selected") {
-      setCategoryError(false);
-    } else {
-      setCategoryError(true);
-    }
   };
 
   const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setItemExpiryDate(value);
-    if (value.trim()) {
-      setExpiryDateError(false);
-    } else {
-      setExpiryDateError(true);
-    }
   };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!itemName.trim()) {
-      setNameError(true);
-    } else {
-      setNameError(false);
-    }
-
-    if (itemCategory == "Not Selected") {
-      setCategoryError(true);
-    } else {
-      setCategoryError(false);
-    }
 
     const itemToPost = {
       foodName: itemName,
@@ -96,6 +75,11 @@ const HomePage = () => {
     setItemName(item.foodName);
     setItemCategory(item.foodCategory);
     setItemExpiryDate(item.foodExpiryDate);
+  };
+
+  const handleDelete = (foodId: string | undefined) => {
+    deleteSaveItem(foodId);
+    setShowPopUp(false);
   };
 
   const fetchSaveItems = async () => {
@@ -130,7 +114,7 @@ const HomePage = () => {
         }
       );
       if (response.status === 200) {
-        setExpiringItems(response.data)
+        setExpiringItems(response.data);
         console.log("Success response data:", response.data);
       }
     } catch (error) {
@@ -173,7 +157,7 @@ const HomePage = () => {
         }
       );
       if (response.status === 200) {
-        setSaveId(response.data);
+        setIsSaveItemDeleted(!isSaveItemDeleted);
       }
     } catch (error) {
       console.error("Error deleting Save Item:", error);
@@ -199,15 +183,12 @@ const HomePage = () => {
         }
       );
       if (response.status === 200) {
-        setSaveId(response.data);
+        setIsEditSaveButtonClicked(!isEditSaveButtonClicked);
         setEditingFoodId(null);
         setIsEditButtonClicked(false);
         setItemName("");
         setItemCategory("Not Selected");
         setItemExpiryDate("");
-        setNameError(true);
-        setCategoryError(true);
-        setExpiryDateError(true);
       }
     } catch (error) {
       console.error("Error updating Save Item:", error);
@@ -220,12 +201,12 @@ const HomePage = () => {
       await fetchExpiringItems();
     };
     fetchData();
-  }, [saveId]);
+  }, [saveId, isSaveItemDeleted, isEditSaveButtonClicked]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <NavBar />
-      {expiringItems.length > 0 && <Countdown/> }
+      {expiringItems.length > 0 && <Countdown />}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl sm:text-4xl font-bold text-blue-500 mb-6 text-center">
           Save It Manager
@@ -255,13 +236,13 @@ const HomePage = () => {
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
             <label className="flex-1 flex flex-col text-gray-700">
-              Name:
+              Item Name:
               <input
                 type="text"
                 value={itemName}
                 onChange={handleNameChange}
                 className={`mt-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  nameError
+                  itemName == ""
                     ? "border-red-300 focus:ring-red-400"
                     : "border-black-300 focus:ring-blue-400"
                 }`}
@@ -269,12 +250,12 @@ const HomePage = () => {
             </label>
 
             <label className="flex-1 flex flex-col text-gray-700">
-              Category:
+              Item Category:
               <select
-                value={itemCategory} 
+                value={itemCategory}
                 onChange={handleCategoryChange}
                 className={`mt-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  categoryError
+                  itemCategory == "Not Selected"
                     ? "border-red-300 focus:ring-red-400"
                     : "border-black-300 focus:ring-blue-400"
                 }`}
@@ -294,7 +275,7 @@ const HomePage = () => {
                 value={itemExpiryDate}
                 onChange={handleExpiryDateChange}
                 className={`mt-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  expiryDateError
+                  itemExpiryDate == ""
                     ? "border-red-300 focus:ring-red-400"
                     : "border-black-300 focus:ring-blue-400"
                 }`}
@@ -305,9 +286,9 @@ const HomePage = () => {
           <button
             type="submit"
             disabled={
-              nameError ||
-              categoryError ||
-              expiryDateError ||
+              itemName == "" ||
+              itemCategory == "Not Selected" ||
+              itemExpiryDate == "" ||
               isEditButtonClicked
             }
             className="mt-2 w-full sm:w-auto px-4 py-2 font-semibold rounded-md transition-colors duration-200 bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed"
@@ -358,7 +339,10 @@ const HomePage = () => {
                   <td className="px-6 py-3 border-b text-gray-800">
                     <button
                       type="button"
-                      onClick={() => deleteSaveItem(item.foodId)}
+                      onClick={() => {
+                        setShowPopUp(true);
+                        setDeletingFoodId(item.foodId);
+                      }}
                       className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                     >
                       Delete
@@ -379,6 +363,9 @@ const HomePage = () => {
                           onClick={() => {
                             setEditingFoodId(null);
                             setIsEditButtonClicked(false);
+                            setItemName("");
+                            setItemCategory("Not Selected");
+                            setItemExpiryDate("");
                           }}
                           className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
                         >
@@ -400,6 +387,13 @@ const HomePage = () => {
             </tbody>
           </table>
         </div>
+        {showPopUp && (
+          <PopUp
+            foodId={deletingFoodId}
+            onConfirm={handleDelete}
+            onClose={() => setShowPopUp(false)}
+          />
+        )}
       </div>
     </div>
   );
