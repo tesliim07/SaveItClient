@@ -1,9 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE } from "../api";
 
 const ToggleButton = () => {
   const [isEnabled, setIsEnabled] = useState(false);
+
+  useEffect(() => {
+    const fetchDeleteJobStatus = async () => {
+      const token = localStorage.getItem("jwt");
+      try {
+        const response = await axios.get(
+          `${API_BASE}/api/job/GetUserDeleteDecision`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.status === 200) {
+          setIsEnabled(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching Delete Job status:", error);
+      }
+    };
+    fetchDeleteJobStatus();
+  }, []);
 
   const triggerDeleteJob = async () => {
     const token = localStorage.getItem("jwt");
@@ -30,7 +52,7 @@ const ToggleButton = () => {
     {/* mobile: label left + toggle right | desktop: whole thing aligned right */}
     <div className="flex w-full items-center justify-between sm:justify-end gap-3">
       <span className="text-xs sm:text-sm font-medium text-gray-700">
-        Auto delete expired items
+        Auto delete expired items every 24 hours
       </span>
 
       <button
