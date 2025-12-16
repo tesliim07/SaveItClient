@@ -10,7 +10,7 @@ const ToggleButton = () => {
       const token = localStorage.getItem("jwt");
       try {
         const response = await axios.get(
-          `${API_BASE}/api/job/GetUserDeleteDecision`,
+          `${API_BASE}/api/Job/GetUserDeleteDecision`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -19,6 +19,7 @@ const ToggleButton = () => {
         );
         if (response.status === 200) {
           setIsEnabled(response.data);
+          console.log("Fetch Delete Job status:", response.data)
         }
       } catch (error) {
         console.error("Error fetching Delete Job status:", error);
@@ -27,11 +28,12 @@ const ToggleButton = () => {
     fetchDeleteJobStatus();
   }, []);
 
-  const triggerDeleteJob = async () => {
+  const triggerDeleteJob = async (nextEnabled: boolean) => {
     const token = localStorage.getItem("jwt");
+    console.log("Triggering Delete Job with status:", nextEnabled);
     try {
       const response = await axios.post(
-        `${API_BASE}/api/job/RunDeleteJob/${isEnabled}`,
+        `${API_BASE}/api/Job/RunDeleteJob/${nextEnabled}`,
         null,
         {
           headers: {
@@ -40,7 +42,8 @@ const ToggleButton = () => {
         }
       );
       if (response.status === 200) {
-        console.log("Delete Job triggered successfully");
+        console.log("Delete Job triggered successfully, status:", response.data);
+        window.location.reload();
       }
     } catch (error) {
       console.error("Error triggering Delete Job:", error);
@@ -58,9 +61,12 @@ const ToggleButton = () => {
       <button
         type="button"
         onClick={() => {
-          setIsEnabled(!isEnabled);
-          triggerDeleteJob();
-        }}
+  setIsEnabled(prev => {
+    const next = !prev;
+    triggerDeleteJob(next);
+    return next;
+  });
+}}
         className={`relative h-8 w-14 rounded-full transition ${
           isEnabled ? "bg-blue-600" : "bg-gray-300"
         }`}
