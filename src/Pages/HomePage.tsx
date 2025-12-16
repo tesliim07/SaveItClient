@@ -4,6 +4,7 @@ import { API_BASE } from "../api";
 import NavBar from "../components/NavBar";
 import Countdown from "../components/Countdown";
 import PopUp from "../components/PopUp";
+import ToggleButton from "../components/ToggleButton";
 
 interface SaveItemsProps {
   foodId?: string;
@@ -206,6 +207,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <NavBar />
+      <ToggleButton />
       {expiringItems.length > 0 && <Countdown />}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl sm:text-4xl font-bold text-blue-500 mb-6 text-center">
